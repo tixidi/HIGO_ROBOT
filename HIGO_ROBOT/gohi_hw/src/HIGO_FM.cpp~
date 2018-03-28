@@ -1,0 +1,418 @@
+#include <gohi_hw/HIGO_FM.h>
+#include "stdio.h"
+#include <string.h>
+
+
+/*
+v1.2 
+1、增加数据包接收计数功能
+2、函数改为带返回值型
+3、数据包解析改为不带参数的
+*/
+
+bool HIGO_FM::receive_package_process(const unsigned char data)
+{
+	unsigned char receive_over=0;
+	unsigned char package_update = 0;
+	receive_over = receive_state_machine(data);
+	if (receive_over)
+	{
+		receive_over = 0;
+		package_update = package_analysis();   //  数据帧分析
+		if (package_update == 1) receive_package_count++;
+		return package_update;
+	}
+	return 0;
+}
+
+/*
+
+
+
+发送的
+ff  //起始标识
+ff  //起始标识
+01 //发送者标识
+11 //接收者标识
+LH //发送字节长度高8位
+LL //发送字节长度低8位
+DATA //发送的数据
+CHECK//校验值
+
+
+注意：
+1、需要保存数据包长度
+2、需要保存数据
+
+*/
+/*
+v1.2
+1、在接收ID、发送ID错误时打印提示信息
+2、接收ID、发送ID宏定义便于修改
+3、check_sum修改为单字节和校验
+
+*/
+
+unsigned char HIGO_FM::receive_state_machine(const  unsigned char rx_data)
+{
+
+	switch (receive_state_)
+	{
+	case WAITING_FF1:
+		if (rx_data == 0xff)
+		{
+			receive_state_ = WAITING_FF2;
+			receive_check_sum_ = 0;
+			receive_message_length_ = 0;
+			msg_d_byte_cnt_ = 0;
+			receive_check_sum_ += rx_data;
+		}
+		break;
+
+	case WAITING_FF2:
+		if (rx_data == 0xff)
+		{
+			receive_state_ = SENDER_ID;
+			receive_check_sum_ += rx_data;
+		}
+		else
+			receive_state_ = WAITING_FF1;
+		break;
+
+	case SENDER_ID:
+		rx_message_.sender_id = rx_data;
+		if (rx_message_.sender_id == friend_id)  //id check
+		{
+			receive_check_sum_ += rx_data;
+			receive_state_ = RECEIVER_ID;
+		}
+		else
+		{
+			printf("error , the sender_ID is not my friend \n");
+			receive_state_ = WAITING_FF1;
+		}
+		break;
+
+	case RECEIVER_ID:
+		rx_message_.receiver_id = rx_data;
+		if (rx_message_.receiver_id == my_id)  //id check
+		{
+			receive_check_sum_ += rx_data;
+			receive_state_ = RECEIVE_LEN_H;
+		}
+		else
+		{
+			printf("error , the reciver_ID is not my_ID \n");
+			receive_state_ = WAITING_FF1;
+		}
+		break;
+
+	case RECEIVE_LEN_H:
+		receive_check_sum_ += rx_data;
+		receive_message_length_ |= rx_data << 8;
+		receive_state_ = RECEIVE_LEN_L;
+		break;
+
+	case RECEIVE_LEN_L:
+		receive_check_sum_ += rx_data;
+		receive_message_length_ |= rx_data;
+		rx_message_.length = receive_message_length_;
+		receive_state_ = RECEIVE_PACKAGE;
+		break;
+
+	case RECEIVE_PACKAGE:
+		receive_check_sum_ += rx_data;
+		rx_message_.data[msg_d_byte_cnt_++] = rx_data;
+		if (msg_d_byte_cnt_ >= receive_message_length_)
+		{
+			receive_state_ = RECEIVE_CHECK;
+			receive_check_sum_ = receive_check_sum_ % 255;
+		}
+		break;
+
+	case RECEIVE_CHECK:
+		if (rx_data == (unsigned char)receive_check_sum_)
+		{
+			receive_check_sum_ = 0;
+			receive_state_ = WAITING_FF1;
+			printf("receive a package \n");
+			return 1;
+		}
+		else
+		{
+			printf("check sum error \n");
+			receive_state_ = WAITING_FF1;
+		}
+		break;
+	default:
+		receive_state_ = WAITING_FF1;
+	}
+
+	return 0;
+}
+
+unsigned char HIGO_FM::package_analysis(void)
+{
+	unsigned char analysis_state = 0;
+	void* single_command;
+
+	command_state_ = (CMD_WORD)rx_message_.data[0];
+	
+	switch (command_state_)
+	{
+	case SHAKING_HANDS:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_global_coordinate, sizeof(my_robot->measure_global_coordinate));
+		break;
+
+	case READ_ROBOT_SYSTEM_INFO:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->robot_system_info, sizeof(my_robot->robot_system_info));
+		break;
+
+	case SET_GLOBAL_SPEED:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->expect_global_speed, sizeof(my_robot->expect_global_speed));
+		break;
+
+	case READ_GLOBAL_SPEED:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_global_speed, sizeof(my_robot->measure_global_speed));
+		break;
+
+	case SET_ROBOT_SPEED:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->expect_robot_speed, sizeof(my_robot->expect_robot_speed));
+		break;
+
+	case READ_ROBOT_SPEED:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_robot_speed, sizeof(my_robot->measure_robot_speed));
+		break;
+
+	case SET_MOTOR_SPEED:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->expect_motor_speed, sizeof(my_robot->expect_motor_speed));
+		break;
+
+	case READ_MOTOR_SPEED:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_motor_speed, sizeof(my_robot->measure_motor_speed));
+		break;
+
+	case READ_MOTOR_MILEAGE:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_motor_mileage, sizeof(my_robot->measure_motor_mileage));
+		break;
+
+	case READ_GLOBAL_COORDINATE:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_global_coordinate, sizeof(my_robot->measure_global_coordinate));
+		break;
+
+	case READ_ROBOT_COORDINATE:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_robot_coordinate, sizeof(my_robot->measure_robot_coordinate));
+		break;
+
+	case CLEAR_COORDINATE_DATA:
+		break;
+
+	case READ_IMU_DATA:
+		analysis_state = readCommandAnalysis(command_state_, (unsigned char *)&my_robot->measure_imu_euler_angle, sizeof(my_robot->measure_imu_euler_angle));
+		break;
+
+	case SET_ROBOY_PARAMETERS:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->robot_parameters, sizeof(my_robot->robot_parameters));
+		break;
+
+	case SAVE_ROBOY_PARAMETERS:
+		break;
+
+	case SET_MOTOR_PARAMETERS:
+		analysis_state = setCommandAnalysis(command_state_, (unsigned char *)&my_robot->motor_parameters, sizeof(my_robot->motor_parameters));
+		break;
+
+	case SAVE_MOTOR_PARAMETERS:
+		break;
+
+	default:
+		analysis_state = 0;
+		break;
+
+	}
+	rx_message_.sender_id = 0;    //clear flag
+	rx_message_.receiver_id = 0;
+	rx_message_.length = 0;
+	rx_message_.data[0] = 0;
+
+	return analysis_state;
+}
+
+unsigned char HIGO_FM::readCommandAnalysis(const CMD_WORD  command_word, unsigned char * p, const unsigned short int  len)
+{	
+	if ((rx_message_.length - 1) != len)
+	{
+		printf("I'm a master , can not read the message from slave , the length is not mathcing to struct \n");
+		return 0;
+	}
+	memcpy(p, &rx_message_.data[1], len);
+	receive_package_renew[(unsigned char)command_word] = 1;
+
+	return 1;
+}
+
+unsigned char HIGO_FM::setCommandAnalysis(const CMD_WORD  command_word, unsigned char * p, const unsigned short int  len)
+{
+	if (command_word == SHAKING_HANDS)
+	{
+		printf("receive a shackhand");
+	}
+	else
+	{
+		printf("receive a ack");
+	}
+	receive_package_renew[(unsigned char)command_word] = 1;
+	return 1;
+}
+
+/*
+
+
+
+主机发送数据包
+
+发送数据包，如果握手了，之后就不需要握手了
+
+*/
+
+
+unsigned char  HIGO_FM::send_package(const CMD_WORD command_state)
+{
+	unsigned char analysis_state = 1;
+	void* single_command;
+
+
+	switch (command_state)
+	{
+	case SHAKING_HANDS:
+		receive_package_renew[(unsigned char)command_state] = 0;
+		pack_frame(command_state, (unsigned char *)&my_robot->measure_global_coordinate, sizeof(my_robot->measure_global_coordinate));
+		break;
+
+	case READ_ROBOT_SYSTEM_INFO:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case SET_GLOBAL_SPEED:
+		pack_frame(command_state, (unsigned char *)&my_robot->expect_global_speed, sizeof(my_robot->expect_global_speed));
+		break;
+
+	case READ_GLOBAL_SPEED:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case SET_ROBOT_SPEED:
+		pack_frame(command_state, (unsigned char *)&my_robot->expect_robot_speed, sizeof(my_robot->expect_robot_speed));
+		break;
+
+	case READ_ROBOT_SPEED:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case SET_MOTOR_SPEED:
+		pack_frame(command_state, (unsigned char *)&my_robot->expect_motor_speed, sizeof(my_robot->expect_motor_speed));
+		break;
+
+	case READ_MOTOR_SPEED:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case READ_MOTOR_MILEAGE:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case READ_GLOBAL_COORDINATE:;
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case READ_ROBOT_COORDINATE:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case CLEAR_COORDINATE_DATA:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case READ_IMU_DATA:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case SET_ROBOY_PARAMETERS:
+		pack_frame(command_state, (unsigned char *)&my_robot->robot_parameters, sizeof(my_robot->robot_parameters));
+		break;
+
+	case SAVE_ROBOY_PARAMETERS:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	case SET_MOTOR_PARAMETERS:
+		pack_frame(command_state, (unsigned char *)&my_robot->motor_parameters, sizeof(my_robot->motor_parameters));
+		break;
+
+	case SAVE_MOTOR_PARAMETERS:
+		pack_frame(command_state, (unsigned char *)single_command, 0);
+		break;
+
+	default:
+		analysis_state = 0;
+		break;
+
+	}
+
+	return analysis_state;
+}
+
+void HIGO_FM::pack_frame(const CMD_WORD command_word, unsigned char* p, const unsigned short int len)
+{
+	tx_message_.sender_id = my_id;
+	tx_message_.receiver_id = friend_id;
+	tx_message_.length = len + 1;
+	tx_message_.data[0] = (unsigned char)command_word;
+	if (len == 0)
+	{
+
+	}
+	else if (len > 0)
+	{
+		memcpy(&tx_message_.data[1], p, len);
+	}
+	pack_package();
+}
+
+void HIGO_FM::pack_package(void)
+{
+	unsigned short int tx_i;
+	unsigned int check_sum_ = 0;
+
+	tx_buffer[0] = 0xff;
+	check_sum_ += 0xff;
+
+	tx_buffer[1] = 0xff;
+	check_sum_ += 0xff;
+
+	tx_buffer[2] = tx_message_.sender_id;
+	check_sum_ += tx_buffer[2];
+
+	tx_buffer[3] = tx_message_.receiver_id;
+	check_sum_ += tx_buffer[3];
+
+	tx_buffer[4] = (unsigned char)(tx_message_.length >> 8); //LEN_H
+	check_sum_ += tx_buffer[4];
+
+	tx_buffer[5] = (unsigned char)tx_message_.length;   //LEN_L
+	check_sum_ += tx_buffer[5];
+
+	for (tx_i = 0; tx_i < tx_message_.length; tx_i++)   //package
+	{
+		tx_buffer[6 + tx_i] = tx_message_.data[tx_i];
+		check_sum_ += tx_buffer[6 + tx_i];
+	}
+	check_sum_ = check_sum_ % 255;
+	tx_buffer[6 + tx_i] = check_sum_;
+
+	tx_buffer_length = 7 + tx_i;
+
+
+
+	send_packag_count++;
+}

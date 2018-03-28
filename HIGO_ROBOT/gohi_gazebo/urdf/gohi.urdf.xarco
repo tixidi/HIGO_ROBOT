@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<robot
+  name="higo"
+  xmlns:xacro="http://www.ros.org/wiki/xacro"
+>
+
+    <!-- Included URDF Files -->
+    <xacro:include filename="$(find gohi_gazebo)/urdf/gohi_base.xacro" />
+    
+    <!-- Instantiate quadrotor_base_macro once (has no parameters atm) -->
+    <xacro:gohi_base />
+
+
+
+</robot>

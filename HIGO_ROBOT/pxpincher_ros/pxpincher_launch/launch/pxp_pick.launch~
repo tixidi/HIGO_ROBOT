@@ -1,0 +1,8 @@
+<launch>
+
+
+    <node pkg="pxpincher_lib" type="visionPickAndPlace" name="vision_Pick_And_Place" output="screen"/>
+
+
+</launch>
+

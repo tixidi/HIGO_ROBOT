@@ -1,0 +1,6 @@
+<launch>
+
+  	<node name="robot_blockly_server" pkg="robot_blockly"   type="receive_server.py" output="screen" />  
+        <node name="robot_blockly_webserver" pkg="robot_blockly" type="pywebserver.py"/>
+
+</launch>

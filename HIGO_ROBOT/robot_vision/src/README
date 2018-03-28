@@ -1,0 +1,15 @@
+sub_sendImage 通过"takePhotoFlag"主题控制拍照，保存图像
+sendImage     获得左右摄像头的图像，发送主题"camera/image/image_raw/left"
+                                          "camera/image/image_raw/right"
+receiveImage  获得主题"camera/image/image_raw/left"和"camera/image/image_raw/right"上的图像，显示灰度图像
+receiveImage1  receiveImage的另一种形式
+
+saveImage     获得主题"camera/image/image_raw/left"和"camera/image/image_raw/right"上的图像，保存图像
+
+
+
+getImage      获得"camera/rgb/image_raw"主题上的图像，显示 。
+              注意颜色有点问题，需要更改模式    
+
+processImage  实现分割
+ 

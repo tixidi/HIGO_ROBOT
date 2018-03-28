@@ -1,0 +1,6 @@
+<launch>
+ 
+   <include file="$(find robot_blockly)/launch/con_server.launch" />
+   <include file="$(find simple_voice)/launch/weixin_speaker.launch"   /> 
+
+</launch>

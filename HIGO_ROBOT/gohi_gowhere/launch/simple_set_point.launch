@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="go_to_simple_rqt_reconfigure_point_on_map" pkg="gohi_gowhere" type="simple_set_point.py"  output="screen">
+ 
+ </node>
+</launch>

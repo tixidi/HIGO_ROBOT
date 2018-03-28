@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="go_to_specific_point_on_map" pkg="gohi_gowhere" type="go_to_specific_point_on_map.py"  output="screen">
+ 
+ </node>
+</launch>

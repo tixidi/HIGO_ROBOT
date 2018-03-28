@@ -1,0 +1,10 @@
+<launch>
+    <include file="$(find rbx1_vision)/launch/usb_cam_left.launch"          />
+    <include file="$(find rbx1_vision)/launch/usb_cam_right.launch"         />
+    <include file="$(find rbx1_vision)/launch/camshift1.launch"      />
+    <node name="save_roi_image" pkg="robot_vision" type="roi_stable_photo" output="screen" />
+    <node name="get_disparity_send_chatter" pkg="robot_vision" type="indirectProcessImage"  output="screen" />
+ 
+    
+</launch>
+

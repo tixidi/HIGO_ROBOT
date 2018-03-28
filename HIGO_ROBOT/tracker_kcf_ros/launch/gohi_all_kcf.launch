@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="all_kcf" pkg="tracker_kcf_ros" type="kcf_node_all" output="screen" />
+
+
+</launch>

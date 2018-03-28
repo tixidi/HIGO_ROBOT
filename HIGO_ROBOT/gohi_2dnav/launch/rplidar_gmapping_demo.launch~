@@ -1,0 +1,10 @@
+<launch>
+  <!-- Define laser type-->
+  <arg name="laser_type" default="rplidar" />
+
+  <!-- laser driver -->
+  <include file="$(find gohi_2dnav)/laser/driver/$(arg laser_type)_laser.launch" />
+
+  <include file="$(find gohi_2dnav)/move_base_config/slam_gmapping.xml"/> 
+  <include file="$(find gohi_2dnav)/move_base_config/move_base.xml"/>
+</launch>

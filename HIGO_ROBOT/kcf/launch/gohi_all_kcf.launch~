@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="kcf" pkg="kcf" type="kcf_node" output="screen" />
+
+
+</launch>

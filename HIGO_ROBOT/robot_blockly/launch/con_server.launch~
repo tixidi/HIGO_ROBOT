@@ -1,0 +1,7 @@
+<launch>
+
+  	<node name="robot_blockly_server" pkg="robot_blockly"   type="con_server.py" output="screen" />  
+        <node name="robot_blockly_webserver" pkg="robot_blockly" type="pywebserver.py"/>
+        <include file="$(find simple_voice)/launch/weixin_speaker.launch"   /> 
+
+</launch>

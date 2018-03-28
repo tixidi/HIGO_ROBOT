@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="weixin_to_specific_point_on_map" pkg="gohi_gowhere" type="weixin_to_site.py"  output="screen">
+ 
+ </node>
+</launch>

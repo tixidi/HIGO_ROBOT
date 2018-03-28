@@ -1,0 +1,13 @@
+<launch>
+    <!-- Launch the higo driver        -->
+    <include file="$(find gohi_hw)/launch/gohi_hw.launch" />
+    <include file="$(find gohi_2dnav)/launch/move_base_amcl_5cm.launch" />
+    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+    <include file="$(find gohi_gowhere)/launch/weixin_to_specific_point.launch" /> 
+    <include file="$(find robot_blockly)/launch/weixin_con_odom_ack_server.launch" />
+    <include file="$(find robot_blockly)/launch/image_upload_server.launch" />
+    <include file="$(find simple_voice)/launch/weixin_speaker.launch"   /> 
+    <include file="$(find rbx1_vision)/launch/usb_cam_left.launch"          />
+    <include file="$(find rbx1_vision)/launch/usb_cam_right.launch"         />
+    <include file="$(find openni_launch)/launch/openni.launch" />   
+</launch>

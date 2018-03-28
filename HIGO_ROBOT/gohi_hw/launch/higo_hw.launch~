@@ -1,0 +1,16 @@
+<launch>
+
+  <node name="gohi_hw_node" pkg="gohi_hw" type="gohi_hw_node" />
+
+  <rosparam file="$(find gohi_hw)/config/config.yaml" command="load"/>
+
+  <!-- load the controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+      output="screen" ns="/mobile_base" 
+      args="joint_state_controller mobile_base_controller"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" >
+      <remap from="/joint_states" to="/mobile_base/joint_states"/>
+  </node>
+
+
+</launch>

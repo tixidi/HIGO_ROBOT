@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import rospy
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import actionlib
+from actionlib_msgs.msg import *
+from geometry_msgs.msg import Pose, Point, Quaternion
+from std_msgs.msg import String
+from dynamic_reconfigure.server import Server
+import dynamic_reconfigure.client
+from gohi_gowhere.cfg import NavSetPointConfig
+
+
+class GoToPose():
+    def __init__(self):
+
+        self.goal_sent = False
+###################################################################################################
+        # Set the distance to travel
+        self.Site1_X = rospy.get_param('Site1_X', 1.0) # meters
+        self.Site1_Y = rospy.get_param('Site1_Y', 0.2) # meters per second
+        self.Site1_Z = rospy.get_param('Site1_Z', 0.001) # meters
+        
+        self.Site2_X = rospy.get_param('Site2_X', 1.0) # meters
+        self.Site2_Y = rospy.get_param('Site2_Y', 0.2) # meters per second
+        self.Site2_Z = rospy.get_param('Site2_Z', 0.001) # meters
+
+        self.nav_end = rospy.get_param('nav_end', True)
+       
+
+
+        # Fire up the dynamic_reconfigure server
+        dyn_server = Server(NavSetPointConfig, self.dynamic_reconfigure_callback)
+        
+        # Connect to the dynamic_reconfigure server
+        dyn_client = dynamic_reconfigure.client.Client("nav_set_point", timeout=60)
+
+###################################################################################################
+
+	# What to do if shut down (e.g. Ctrl-C or failure)
+	#rospy.on_shutdown(self.shutdown)
+
+        #we consider the following simple commands, which you can extend on your own
+
+
+        #subscribe the voice recognitive results
+       # rospy.Subscriber('/TEST_MSG', String, self.voice_command_callback)
+         #create a Rate object to sleep the process at 5 Hz
+        rate = rospy.Rate(5)
+
+        self.start_test = False
+        params = {'start_test': False}
+        rospy.loginfo(params)
+        dyn_client.update_configuration(params)
+	rospy.loginfo("Wait for the action server to come up")
+
+
+          
+
+
+    def shutdown(self):
+        rospy.loginfo("Stop")
+        rospy.sleep(1)
+
+###################################################################################################
+    def dynamic_reconfigure_callback(self, config, level):
+        self.Site1_X = config['Site1_X'] 
+        self.Site1_Y = config['Site1_Y']
+        self.Site1_Z = config['Site1_Z'] 
+        self.Site2_X = config['Site2_X'] 
+        self.Site2_Y = config['Site2_Y'] 
+        self.Site2_Z = config['Site2_Z'] 
+        self.nav_end = config['nav_end']
+      
+        print (self.Site1_X)
+        print (self.Site1_Y)
+    
+        return config
+###################################################################################################
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('nav_test', anonymous=False)
+        navigator = GoToPose()
+        rospy.spin()
+        
+
+        # choice your want to go where
+    except rospy.ROSInterruptException:
+        rospy.loginfo("Ctrl-C caught. Quitting")
+

@@ -1,0 +1,4 @@
+<launch>
+    <!-- Launch the kcf tracking        -->
+    <include file="$(find tracker_kcf_ros)/launch/gohi_all_kcf.launch" />
+</launch>

@@ -1,0 +1,10 @@
+<launch>
+
+    <node name="sace_both_image" pkg="robot_vision" type="saveImage" output="screen" />
+    <node name="get_disparity_send_chatter" pkg="robot_vision" type="indirectProcessImage"  output="screen" />
+
+    <node pkg="pxpincher_lib" type="visionPickAndPlace" name="vision_Pick_And_Place" output="screen"/>
+
+
+</launch>
+

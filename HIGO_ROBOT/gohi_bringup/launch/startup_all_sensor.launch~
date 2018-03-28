@@ -1,0 +1,29 @@
+<launch>
+    <arg name="leftCam" default="false" />
+    <arg name="rightCam" default="false" />
+
+    <!-- Launch the higo driver -->
+  
+    <include file="$(find rbx1_dynamixels)/launch/dynamixels.launch"        />
+    
+    <include file="$(find gohi_hw)/launch/gohi_hw.launch"                   />
+    <include file="$(find rplidar_ros)/launch/rplidar.launch"               />
+    <include file="$(find openni_launch)/launch/openni.launch"              />
+    <include file="$(find simple_voice)/launch/nav_speaker.launch"          />
+
+    <include file="$(find rbx1_vision)/launch/usb_cam_left.launch"          />
+    <include file="$(find rbx1_vision)/launch/usb_cam_right.launch"         />
+
+    <include file="$(find rbx1_vision)/launch/camshift1.launch"      />
+    <include file="$(find rbx1_dynamixels)/launch/head_tracker.launch"  />
+
+<!-- 启动保存图像和视差图位姿获取  -->
+    <include file="$(find pxpincher_launch)/launch/pxp_vision.launch"      />
+    <include file="$(find pxpincher_launch)/launch/pxp.launch"      />
+    <include file="$(find pxpincher_launch)/launch/pxp_pick.launch"      />
+    
+
+    <include file="$(find simple_voice)/launch/simple_voice_default.launch"      />
+
+
+</launch>

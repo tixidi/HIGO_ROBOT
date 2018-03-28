@@ -1,0 +1,5 @@
+<launch>
+
+
+  	<node name="robot_blockly_image_server" pkg="robot_blockly"   type="image_server1.py" output="screen" />  
+</launch>
